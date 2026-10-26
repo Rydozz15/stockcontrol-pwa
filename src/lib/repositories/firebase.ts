@@ -42,7 +42,7 @@ export interface FirebaseServices {
 }
 
 export const FIREBASE_DEFAULTS: FirebaseConfig = {
-  apiKey: 'AIzaSyBPp8SQcFoVsS0uczaMQNANZ2iFlUf8-bc',
+  apiKey: '',
   authDomain: 'stockcontrol-86bb7.firebaseapp.com',
   projectId: 'stockcontrol-86bb7',
   storageBucket: 'stockcontrol-86bb7.firebasestorage.app',

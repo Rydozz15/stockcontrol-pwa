@@ -5,7 +5,7 @@ const tests = [
     name: 'F06-T01: Firebase config parser requires all mandatory web app credentials',
     fn: async () => {
       const sampleEnv = {
-        PUBLIC_FIREBASE_API_KEY: 'AIzaSyBPp8SQcFoVsS0uczaMQNANZ2iFlUf8-bc',
+        PUBLIC_FIREBASE_API_KEY: 'AIzaSyDUMMY_TEST_KEY_FOR_LOCAL_VALIDATION_000',
         PUBLIC_FIREBASE_AUTH_DOMAIN: 'stockcontrol-86bb7.firebaseapp.com',
         PUBLIC_FIREBASE_PROJECT_ID: 'stockcontrol-86bb7',
         PUBLIC_FIREBASE_STORAGE_BUCKET: 'stockcontrol-86bb7.firebasestorage.app',
