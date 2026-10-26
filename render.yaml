@@ -2,7 +2,7 @@ services:
   - type: web
     name: stockcontrol-pwa
     env: static
-    plan: free
+    # plan: free ($0/month static site)
     buildCommand: npm install && npm run build
     staticPublishPath: ./build
     pullRequestPreviewsEnabled: false

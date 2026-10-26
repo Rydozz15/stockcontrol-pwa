@@ -13,6 +13,7 @@ import { workspaceStore } from './workspaceStore';
 import { connectivityStore } from './connectivityStore';
 import type { IProductRepository } from '$lib/repositories/productRepository';
 import { productRepository } from '$lib/repositories/productRepository';
+import { getSampleKitchenProducts } from '$lib/domain/sampleData';
 
 export type ProductItem = Partial<Product> & {
   id: string;
@@ -327,3 +328,18 @@ export async function updateProductAction(
     connectivityStore.setSyncing(false);
   }
 }
+
+export async function loadSampleInventoryAction(
+  repo: IProductRepository = productRepository
+): Promise<number> {
+  const ws = get(workspaceStore);
+  connectivityStore.setSyncing(true);
+  try {
+    const samples = getSampleKitchenProducts(new Date());
+    const count = await repo.batchImport(ws.workspaceId, samples, ws.operatorAlias);
+    return count;
+  } finally {
+    connectivityStore.setSyncing(false);
+  }
+}
+

@@ -17,6 +17,7 @@
     discardStockAction,
     createProductAction,
     updateProductAction,
+    loadSampleInventoryAction,
     type ProductItem
   } from '$lib/stores/inventoryStore';
   import { productRepository } from '$lib/repositories/productRepository';
@@ -82,6 +83,21 @@
   let isDiscardModalOpen: boolean = false;
   let productToDiscard: ProductItem | null = null;
   let selectedWasteReason: WasteReason = 'vencimiento';
+  let isLoadingSampleData: boolean = false;
+
+  async function handleLoadSampleData() {
+    if (isLoadingSampleData) return;
+    isLoadingSampleData = true;
+    try {
+      const count = await loadSampleInventoryAction();
+      toastStore.success(`¡${count} productos de ejemplo cargados en cocina!`);
+    } catch (err: any) {
+      console.error('Error cargando datos de ejemplo:', err);
+      toastStore.error(`Error al cargar datos de ejemplo: ${err?.message || 'Error desconocido'}`);
+    } finally {
+      isLoadingSampleData = false;
+    }
+  }
 
   // Real-time History Logs for Tablet/Mobile Inspection
   let recentHistoryLogs: HistoryLog[] = [];
@@ -463,11 +479,16 @@
       <!-- Tab Views -->
       {#if activeTab === 'inventario' || activeTab === 'alertas'}
         <div class="inventory-list" role="tabpanel" id="tabpanel-inventario" aria-labelledby="nav-tab-inventario">
-          {#if displayedProducts.length === 0}
+          {#if $inventoryStore.loading}
+            <div class="loading-state" role="status" aria-live="polite">
+              <span class="loading-spinner" aria-hidden="true">🔄</span>
+              <p>Conectando y sincronizando inventario...</p>
+            </div>
+          {:else if displayedProducts.length === 0}
             <div class="empty-state">
-              <span class="empty-icon">📦</span>
-              <h3>No se encontraron productos</h3>
-              {#if activeExpiryFilter !== 'all' || $inventoryStore.searchQuery}
+              {#if activeExpiryFilter !== 'all' || $inventoryStore.searchQuery || $inventoryStore.filterCategory}
+                <span class="empty-icon">📦</span>
+                <h3>No se encontraron productos</h3>
                 <p>No hay coincidencias con los filtros actuales.</p>
                 <button
                   type="button"
@@ -480,7 +501,48 @@
                 >
                   Restablecer filtros
                 </button>
+              {:else if $inventoryStore.products.length === 0}
+                <div class="empty-onboarding-card">
+                  <span class="empty-icon">📦</span>
+                  <h3>Cocina sin productos registrados</h3>
+                  <p class="empty-workspace-badge">Espacio colaborativo: <strong>{$workspaceStore.workspaceId}</strong></p>
+                  <p class="empty-description">
+                    Tu cocina está lista para sincronizar en tiempo real. Puedes comenzar cargando un lote de ingredientes de ejemplo o registrar tus propios insumos manualmente.
+                  </p>
+                  <button
+                    type="button"
+                    class="btn-load-sample"
+                    on:click={handleLoadSampleData}
+                    disabled={isLoadingSampleData}
+                  >
+                    {#if isLoadingSampleData}
+                      <span class="btn-spinner">🔄</span> Cargando ingredientes...
+                    {:else}
+                      ✨ Cargar inventario de ejemplo (8 productos)
+                    {/if}
+                  </button>
+                  <div class="sample-features-hints">
+                    <span>⚡ Sincronización multi-dispositivo</span>
+                    <span>📊 Semáforos de caducidad</span>
+                    <span>🏷️ 8 códigos para escáner</span>
+                    <span>📋 Trazabilidad y mermas</span>
+                  </div>
+                  <div class="or-separator">
+                    <span>o empieza desde cero</span>
+                  </div>
+                  <div class="empty-actions">
+                    <button
+                      type="button"
+                      class="btn-manual-add"
+                      on:click={openNewProductForm}
+                    >
+                      ➕ Registrar primer ingrediente manualmente
+                    </button>
+                  </div>
+                </div>
               {:else}
+                <span class="empty-icon">📦</span>
+                <h3>No se encontraron productos</h3>
                 <p>Presiona el botón (+) en la esquina inferior para registrar el primer ingrediente.</p>
               {/if}
             </div>
@@ -1256,6 +1318,149 @@
     padding: 8px 16px;
     font-weight: 700;
     cursor: pointer;
+  }
+
+  .loading-state {
+    text-align: center;
+    padding: 48px 16px;
+    color: var(--color-muted, #7c7168);
+    background: var(--color-surface, #ffffff);
+    border-radius: 16px;
+    border: 1px dashed var(--color-line, #eadfd2);
+  }
+
+  .loading-spinner {
+    font-size: 2.5rem;
+    display: inline-block;
+    animation: spin 1.5s linear infinite;
+    margin-bottom: 12px;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .empty-onboarding-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .empty-workspace-badge {
+    display: inline-block;
+    background: var(--color-cream, #fff8ef);
+    border: 1px solid var(--color-line, #eadfd2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.85rem;
+    color: var(--color-brown, #75472f);
+    margin: 4px 0 8px 0;
+  }
+
+  .empty-description {
+    font-size: 0.9rem;
+    max-width: 440px;
+    line-height: 1.4;
+    margin-bottom: 12px;
+    color: var(--color-ink, #302821);
+  }
+
+  .btn-load-sample {
+    min-height: var(--touch-min, 44px);
+    background: var(--color-brown, #75472f);
+    color: #ffffff;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(117, 71, 47, 0.25);
+    transition: transform 0.15s ease, opacity 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .btn-load-sample:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+
+  .btn-load-sample:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+  }
+
+  .btn-spinner {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+  }
+
+  .sample-features-hints {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    font-size: 0.75rem;
+    color: var(--color-muted, #7c7168);
+    margin: 16px 0;
+    max-width: 440px;
+    text-align: left;
+  }
+
+  .or-separator {
+    position: relative;
+    width: 100%;
+    max-width: 280px;
+    text-align: center;
+    margin: 8px 0 16px 0;
+  }
+
+  .or-separator::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: var(--color-line, #eadfd2);
+    z-index: 0;
+  }
+
+  .or-separator span {
+    position: relative;
+    background: var(--color-surface, #ffffff);
+    padding: 0 12px;
+    font-size: 0.75rem;
+    color: var(--color-muted, #7c7168);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .empty-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .btn-manual-add {
+    min-height: var(--touch-min, 44px);
+    background: transparent;
+    color: var(--color-brown, #75472f);
+    border: 1px solid var(--color-brown, #75472f);
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .btn-manual-add:hover {
+    background: var(--color-cream, #fff8ef);
   }
 
   /* Detail Inspection Card (Right Pane) */
