@@ -1,0 +1,18 @@
+STOCKCONTROL PARA TELÉFONOS
+
+Esta carpeta contiene la versión móvil instalable como aplicación web (PWA).
+
+PARA PROBAR
+- Descomprime el ZIP.
+- Abre index.html en un navegador para una prueba básica. Algunas funciones de instalación/offline no estarán activas al abrirlo directamente como archivo.
+
+PARA INSTALAR EN ANDROID
+1. Publica todos los archivos de esta carpeta en un alojamiento web con HTTPS.
+2. Abre la dirección publicada en Chrome desde tu teléfono.
+3. En el menú del navegador, elige "Instalar aplicación" o "Añadir a pantalla de inicio".
+
+IMPORTANTE
+- Esto no es un APK de Android. Un APK requiere empaquetar la web con herramientas de desarrollo y firmarlo.
+- La app guarda sus registros en el almacenamiento local del navegador de ese dispositivo; no sincroniza datos entre teléfonos.
+- Exporta CSV y guarda respaldos JSON con frecuencia.
+- El archivo original del usuario se conserva como base de la interfaz.
